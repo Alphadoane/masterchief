@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mavdp-redis
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:alpine
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mavdp-brain
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: brain
+  template:
+    metadata:
+      labels:
+        app: brain
+    spec:
+      containers:
+      - name: brain
+        image: mavdp-brain:latest
+        env:
+        - name: REDIS_URL
+          value: "redis://redis-service:6379/0"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mavdp-worker-binary
+spec:
+  replicas: 3 # Start with 3, HPA can scale this
+  selector:
+    matchLabels:
+      app: worker-binary
+  template:
+    metadata:
+      labels:
+        app: worker-binary
+    spec:
+      containers:
+      - name: worker
+        image: mavdp-worker-binary:latest
+        env:
+        - name: REDIS_URL
+          value: "redis://redis-service:6379/0"
+        - name: CORPUS_URL
+          value: "http://minio-service:9000/corpus"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: worker-binary-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mavdp-worker-binary
+  minReplicas: 2
+  maxReplicas: 100
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80

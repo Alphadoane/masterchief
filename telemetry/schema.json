@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MAVDP Engine Telemetry",
+  "description": "Normalized telemetry output for all MAVDP domain engines",
+  "type": "object",
+  "properties": {
+    "target_id": {
+      "type": "string",
+      "description": "Unique identifier for the target being tested"
+    },
+    "engine_type": {
+      "type": "string",
+      "enum": ["native_binary", "web", "api", "iot", "kernel", "blockchain"],
+      "description": "The type of engine reporting the telemetry"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the event"
+    },
+    "coverage_delta": {
+      "type": "number",
+      "description": "New coverage discovered (e.g., block hash or line count increment)"
+    },
+    "crash_hash": {
+      "type": "string",
+      "description": "Unique hash for deduplicating the crash (e.g., stack trace hash)"
+    },
+    "exploitability_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Preliminary exploitability score calculated by the engine"
+    },
+    "severity_estimate": {
+      "type": "string",
+      "enum": ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"],
+      "description": "Initial severity assessment"
+    },
+    "reproduction_input": {
+      "type": "string",
+      "description": "Base64 encoded input or path to file that reproduces the finding"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Engine-specific metadata (e.g., register state, HTTP request/response)"
+    }
+  },
+  "required": ["target_id", "engine_type", "timestamp"]
+}

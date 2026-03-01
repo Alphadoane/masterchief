@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAVDP Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0b10;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-main: #e2e8f0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .findings-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        th { background: rgba(255,255,255,0.05); font-weight: 600; }
+        
+        .severity-high { color: var(--accent-red); font-weight: 600; }
+        .severity-info { color: var(--accent-blue); }
+
+        .tag {
+            background: rgba(255,255,255,0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>MAVDP <span style="font-weight: 300; opacity: 0.5;">| Discovery Dashboard</span></h1>
+        <div class="tag">UPTIME: 99.9%</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">TOTAL FINDINGS</div>
+            <div id="stat-findings" class="stat-val">242</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">ACTIVE ENGINES</div>
+            <div id="stat-engines" class="stat-val">12</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">RISK AVERAGE</div>
+            <div id="stat-risk" class="stat-val">8.4</div>
+        </div>
+    </div>
+
+    <h2>Real-time Telemetry</h2>
+    <table class="findings-table">
+        <thead>
+            <tr>
+                <th>TIME</th>
+                <th>ENGINE</th>
+                <th>TARGET</th>
+                <th>SEVERITY</th>
+                <th>VULN_TYPE</th>
+            </tr>
+        </thead>
+        <tbody id="telemetry-body">
+            <tr>
+                <td>01:58:32</td>
+                <td><span class="tag">kernel</span></td>
+                <td>linux_6.1_x86</td>
+                <td><span class="severity-high">CRITICAL</span></td>
+                <td>KASAN: Use-After-Free</td>
+            </tr>
+            <tr>
+                <td>01:57:15</td>
+                <td><span class="tag">native_binary</span></td>
+                <td>libssl_3.0</td>
+                <td><span class="severity-high">HIGH</span></td>
+                <td>Heap Buffer Overflow</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        // Real logic would fetch from the API Every 5s
+        async function fetchStats() {
+            // const res = await fetch('http://localhost:8000/stats');
+            // const data = await res.json();
+            // document.getElementById('stat-findings').innerText = data.total_findings;
+        }
+        setInterval(fetchStats, 5000);
+    </script>
+</body>
+</html>
