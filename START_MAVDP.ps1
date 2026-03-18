@@ -90,26 +90,29 @@ Write-Host "[*] Checking Python dependencies..." -ForegroundColor Green
 $RequirementsFile = Join-Path $ProjectRoot "requirements.txt"
 if (Test-Path $RequirementsFile) {
     # Check for redis as a proxy for all dependencies
-    try {
-        python -c "import redis, fastapi, uvicorn" 2>$null
+    $OldPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue" # Don't stop on native command failure
+    
+    python -c "import redis, fastapi, uvicorn" 2>$null
+    $CheckCode = $LASTEXITCODE
+    
+    if ($CheckCode -ne 0) {
+        Write-Host "[!] Missing dependencies detected. Attempting to install..." -ForegroundColor Yellow
+        python -m pip install -r $RequirementsFile
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "[!] Missing dependencies detected. Attempting to install..." -ForegroundColor Yellow
-            python -m pip install -r $RequirementsFile
-            if ($LASTEXITCODE -ne 0) {
-                Write-Host "[!] Warning: Dependency installation failed. System may not run correctly." -ForegroundColor Red
-            }
-            else {
-                Write-Host "[+] Dependencies installed successfully." -ForegroundColor Green
-            }
+            Write-Host "[!] Warning: Dependency installation failed. System may not run correctly." -ForegroundColor Red
         }
         else {
-            Write-Host "[+] All Python dependencies are present." -ForegroundColor Green
+            Write-Host "[+] Dependencies installed successfully." -ForegroundColor Green
         }
     }
-    catch {
-        Write-Host "[!] Failed to check dependencies." -ForegroundColor Red
+    else {
+        Write-Host "[+] All Python dependencies are present." -ForegroundColor Green
     }
+    
+    $ErrorActionPreference = $OldPreference
 }
+
 
 
 # --- 3. Start Infrastructure (Redis) ---
