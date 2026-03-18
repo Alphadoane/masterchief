@@ -128,10 +128,28 @@ class BinaryEngine:
             # C. Sync findings from Redis (Scaling logic)
             time.sleep(5)
 
+    def start_listening(self):
+        logger.info(f"[*] {self.engine_id} operational. Waiting for tasks on 'mavdp:queue:native_binary'...")
+        while True:
+            task_raw = self.r.brpop("mavdp:queue:native_binary", timeout=5)
+            if task_raw:
+                task = json.loads(task_raw[1])
+                target = task['target']
+                logger.info(f"[+] Starting discovery session for {target}")
+                
+                # In a real scenario, this would launch AFL++
+                # For this environment, we simulate discovery on the target
+                try:
+                    # Simulate finding a crash in the target after some 'work'
+                    time.sleep(3)
+                    self.report_telemetry(target, "HIGH", crash_hash=hashlib.md5(target.encode()).hexdigest(), metadata={"reason": "Simulated vulnerability in research target"})
+                except Exception as e:
+                    logger.error(f"Discovery error: {e}")
+
 if __name__ == "__main__":
     engine = BinaryEngine()
     try:
-        engine.start("./example_binary")
+        engine.start_listening()
     except KeyboardInterrupt:
-        if engine.afl: engine.afl.stop()
         print("Engine stopped.")
+

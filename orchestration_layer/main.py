@@ -163,7 +163,19 @@ class Orchestrator:
 
 if __name__ == "__main__":
     brain = Orchestrator()
-    # In a real scenario, this would run in a loop or as part of an API server
-    brain.register_engine("worker_01", "native_binary")
-    brain.schedule_task("example_binary", "native_binary")
+    
+    # 1. Register and Task Native Binary Engine
+    brain.register_engine("native_bin_01", "native_binary")
+    brain.schedule_task("vulnerable_target.py", "native_binary")
+    
+    # 2. Register and Task API Engine
+    brain.register_engine("api_fuzzer_01", "api")
+    brain.schedule_task("https://api.mavdp.internal/v2", "api")
+    
+    # 3. Register and Task Blockchain Engine
+    brain.register_engine("chain_audit_01", "blockchain")
+    brain.schedule_task("0x71C7656EC7ab88b098defB751B7401B5f6d8976F", "blockchain")
+    
+    # 4. Listen for system-wide telemetry
     brain.listen_telemetry()
+

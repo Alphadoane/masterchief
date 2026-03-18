@@ -141,11 +141,20 @@ Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "cd '$ProjectR
 Write-Host "[*] Launching API Layer (FastAPI)..." -ForegroundColor Green
 Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot'; python orchestration_layer/api.py" -WindowStyle Normal
 
-# C. Start Mock Engine (Telemetry Generator)
-Write-Host "[*] Launching Mock Discovery Engine..." -ForegroundColor Green
-Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot'; python test_engine.py" -WindowStyle Normal
+# C. Start Discovery Engines (The Swarm)
+Write-Host "[*] Launching Discovery Engine Swarm..." -ForegroundColor Green
+
+# 1. Native Binary Engine
+Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot'; python engines/native_binary/engine.py" -WindowStyle Normal
+
+# 2. Web & API Engine
+Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot'; python engines/web_api/api_engine.py" -WindowStyle Normal
+
+# 3. Blockchain Engine
+Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot'; python engines/blockchain/blockchain_engine.py" -WindowStyle Normal
 
 Start-Sleep -Seconds 3
+
 
 # --- 5. Launch Dashboard ---
 Write-Host "[*] Opening MAVDP Discovery Dashboard..." -ForegroundColor Green
