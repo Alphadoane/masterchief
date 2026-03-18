@@ -30,8 +30,52 @@ else {
     }
     
     if (!$DockerAvailable) {
-        Write-Host "[!] Warning: Docker is not running or accessible. Please start Docker Desktop if you need containerized Redis." -ForegroundColor Yellow
-        # We'll continue anyway, maybe Redis is running as a local service
+        Write-Host "[!] Docker is not running. Attempting to start Docker Desktop..." -ForegroundColor Yellow
+        # Common installation paths for Docker Desktop
+        $DockerPaths = @(
+            "C:\Program Files\Docker\Docker\Docker Desktop.exe",
+            "${env:ProgramFiles}\Docker\Docker\Docker Desktop.exe"
+        )
+        
+        $FoundPath = $null
+        foreach ($Path in $DockerPaths) {
+            if (Test-Path $Path) {
+                $FoundPath = $Path
+                break
+            }
+        }
+
+        if ($FoundPath) {
+            Write-Host "[*] Launching Docker Desktop from $FoundPath..." -ForegroundColor Cyan
+            Start-Process $FoundPath
+            Write-Host "[*] Waiting for Docker to initialize (up to 90s)..." -ForegroundColor Cyan
+            
+            $Timeout = 90
+            $Elapsed = 0
+            while ($Elapsed -lt $Timeout) {
+                Start-Sleep -Seconds 5
+                $Elapsed += 5
+                try {
+                    $null = docker info 2>$null
+                    if ($LASTEXITCODE -eq 0) {
+                        $DockerAvailable = $true
+                        Write-Host "[+] Docker is now ready!" -ForegroundColor Green
+                        break
+                    }
+                }
+                catch {}
+                Write-Host "    ...still initializing ($Elapsed/$Timeout s)" -ForegroundColor Gray
+            }
+            
+            if (!$DockerAvailable) {
+                Write-Host "[!] Docker timed out. Please ensure it is running and has WSL2 or Hyper-V enabled." -ForegroundColor Red
+            }
+        }
+        else {
+            Write-Host "[!] Could not locate Docker Desktop executable in common paths." -ForegroundColor Red
+            Write-Host "    Common locations searched: $DockerPaths" -ForegroundColor Gray
+            Write-Host "    [TIP] If you use a different Redis service, the system will still attempt to connect to it at localhost:6379." -ForegroundColor Gray
+        }
     }
 }
 

@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MAVDP Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-dark: #0a0b10;
@@ -33,7 +35,7 @@
             padding: 20px;
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
         }
 
@@ -45,7 +47,7 @@
 
         .stat-card {
             background: var(--glass-bg);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 20px;
             border-radius: 12px;
             text-align: center;
@@ -65,19 +67,29 @@
             overflow: hidden;
         }
 
-        th, td {
+        th,
+        td {
             text-align: left;
             padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        th { background: rgba(255,255,255,0.05); font-weight: 600; }
-        
-        .severity-high { color: var(--accent-red); font-weight: 600; }
-        .severity-info { color: var(--accent-blue); }
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+        }
+
+        .severity-high {
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+
+        .severity-info {
+            color: var(--accent-blue);
+        }
 
         .tag {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             padding: 4px 8px;
             border-radius: 6px;
             font-family: 'JetBrains Mono', monospace;
@@ -85,6 +97,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="header">
         <h1>MAVDP <span style="font-weight: 300; opacity: 0.5;">| Discovery Dashboard</span></h1>
@@ -118,31 +131,53 @@
             </tr>
         </thead>
         <tbody id="telemetry-body">
-            <tr>
-                <td>01:58:32</td>
-                <td><span class="tag">kernel</span></td>
-                <td>linux_6.1_x86</td>
-                <td><span class="severity-high">CRITICAL</span></td>
-                <td>KASAN: Use-After-Free</td>
-            </tr>
-            <tr>
-                <td>01:57:15</td>
-                <td><span class="tag">native_binary</span></td>
-                <td>libssl_3.0</td>
-                <td><span class="severity-high">HIGH</span></td>
-                <td>Heap Buffer Overflow</td>
+            <!-- Data will be populated by fetchStats() -->
+            <tr id="no-data">
+                <td colspan="5" style="text-align: center; opacity: 0.5;">Waiting for telemetry...</td>
             </tr>
         </tbody>
     </table>
 
     <script>
-        // Real logic would fetch from the API Every 5s
+        const API_URL = 'http://localhost:8000';
+
         async function fetchStats() {
-            // const res = await fetch('http://localhost:8000/stats');
-            // const data = await res.json();
-            // document.getElementById('stat-findings').innerText = data.total_findings;
+            try {
+                const res = await fetch(`${API_URL}/stats`);
+                if (!res.ok) throw new Error('API unstable');
+                const data = await res.json();
+
+                document.getElementById('stat-findings').innerText = data.total_findings;
+                document.getElementById('stat-engines').innerText = data.active_engines;
+
+                // Update findings table
+                const findingsRes = await fetch(`${API_URL}/findings?limit=10`);
+                if (!findingsRes.ok) return;
+                const findings = await findingsRes.json();
+
+                const body = document.getElementById('telemetry-body');
+                if (findings.length > 0) {
+                    body.innerHTML = '';
+                    findings.forEach(f => {
+                        const row = document.createElement('tr');
+                        const severityClass = f.severity_estimate === 'CRITICAL' || f.severity_estimate === 'HIGH' ? 'severity-high' : 'severity-info';
+                        row.innerHTML = `
+                            <td>${new Date(f.timestamp).toLocaleTimeString()}</td>
+                            <td><span class="tag">${f.engine_type}</span></td>
+                            <td>${f.target_id}</td>
+                            <td><span class="${severityClass}">${f.severity_estimate}</span></td>
+                            <td>${f.metadata?.reason || 'Discovery'}</td>
+                        `;
+                        body.appendChild(row);
+                    });
+                }
+            } catch (e) {
+                console.warn("API unreachable - checking backend status...");
+            }
         }
         setInterval(fetchStats, 5000);
+        fetchStats(); // Initial fetch
     </script>
 </body>
+
 </html>
